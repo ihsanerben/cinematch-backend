@@ -1,8 +1,6 @@
 package com.movieweb.backend.controller;
 
-import com.movieweb.backend.model.Favorite;
-import com.movieweb.backend.model.Movie;
-import com.movieweb.backend.model.User;
+import com.movieweb.backend.model.*;
 import com.movieweb.backend.repository.*;
 import com.movieweb.backend.service.GeminiService;
 import lombok.RequiredArgsConstructor;
@@ -11,12 +9,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/recommendations")
 @RequiredArgsConstructor
 public class RecommendationController {
+
+    private final OldMovieRecommendationRepository oldMovieRecommendationRepository;
+    private final OldSerieRecommendationRepository oldSerieRecommendationRepository;
 
     private final FavoriteRepository favoriteRepository;
     private final UserRepository userRepository;
@@ -29,7 +31,6 @@ public class RecommendationController {
     public ResponseEntity<?> getPersonalized(Authentication auth) {
 
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
-
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -49,7 +50,6 @@ public class RecommendationController {
                 originalTitle = movieRepository.findById(fav.getContentId())
                         .map(Movie::getTitle)
                         .orElse(null);
-
             } else {
                 originalTitle = serieRepository.findById(fav.getContentId())
                         .map(s -> s.getName())
@@ -58,21 +58,63 @@ public class RecommendationController {
 
             if (originalTitle == null) continue;
 
-            // 1) Gemini'den öneri başlıkları
+            // 1️⃣ Gemini'den öneri başlıkları
             List<String> suggestedTitles =
                     geminiService.getRecommendationsFromTitles(List.of(originalTitle));
 
-            // 2) DB’de akıllı eşleşen öneriler
-            List<Movie> matched = geminiService.smartMatch(suggestedTitles);
+            // ======================
+            // 🎬 MOVIE RECOMMENDATION
+            // ======================
+            if (fav.getType().equalsIgnoreCase("MOVIE")) {
 
-            if (matched.isEmpty()) continue;
+                List<Movie> matchedMovies = geminiService.smartMatch(suggestedTitles);
+                if (matchedMovies.isEmpty()) continue;
 
-            // 3) frontend için block formatı
-            Map<String, Object> block = new HashMap<>();
-            block.put("basedOn", originalTitle);
-            block.put("recommendations", matched);
+                // 🔹 SAVE (Movie)
+                OldMovieRecommendation oldRec = new OldMovieRecommendation();
+                oldRec.setUser(user);
+                oldRec.setBasedOnTitle(originalTitle);
+                oldRec.setRecommendedMovies(matchedMovies);
+                oldRec.setCreatedAt(LocalDateTime.now());
 
-            responseBlocks.add(block);
+                oldMovieRecommendationRepository.save(oldRec);
+
+                // 🔹 FRONTEND RESPONSE
+                Map<String, Object> block = new HashMap<>();
+                block.put("type", "MOVIE");
+                block.put("basedOn", originalTitle);
+                block.put("recommendations", matchedMovies);
+
+                responseBlocks.add(block);
+            }
+
+            // ======================
+            // 📺 SERIE RECOMMENDATION
+            // ======================
+            else {
+
+                List<Serie> matchedSeries =
+                        geminiService.smartMatchSeries(suggestedTitles);
+
+                if (matchedSeries.isEmpty()) continue;
+
+                // 🔹 SAVE (Serie)
+                OldSerieRecommendation oldRec = new OldSerieRecommendation();
+                oldRec.setUser(user);
+                oldRec.setBasedOnTitle(originalTitle);
+                oldRec.setRecommendedSeries(matchedSeries);
+                oldRec.setCreatedAt(LocalDateTime.now());
+
+                oldSerieRecommendationRepository.save(oldRec);
+
+                // 🔹 FRONTEND RESPONSE
+                Map<String, Object> block = new HashMap<>();
+                block.put("type", "SERIE");
+                block.put("basedOn", originalTitle);
+                block.put("recommendations", matchedSeries);
+
+                responseBlocks.add(block);
+            }
         }
 
         return ResponseEntity.ok(responseBlocks);

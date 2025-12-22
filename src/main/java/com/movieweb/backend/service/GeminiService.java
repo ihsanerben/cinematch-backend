@@ -1,7 +1,9 @@
 package com.movieweb.backend.service;
 
 import com.movieweb.backend.model.Movie;
-import com.movieweb.backend.repository.RecommendationRepository;
+import com.movieweb.backend.model.Serie;
+import com.movieweb.backend.repository.MovieRepository;
+import com.movieweb.backend.repository.SerieRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,13 +22,15 @@ public class GeminiService {
     private String apiKey;
 
     private final TmdbSearchService tmdbSearchService;
-    private final RecommendationRepository recommendationRepository;
+    private final MovieRepository movieRepository;
+    private final SerieRepository serieRepository;
 
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=";
 
-
-    /** 1) Gemini’ye başlık gönder → sadece string öneriler döner */
+    // =====================================================
+    // 1️⃣ Gemini’ye başlık gönder → sadece STRING döner
+    // =====================================================
     public List<String> getRecommendationsFromTitles(List<String> titles) {
 
         String prompt =
@@ -37,8 +41,9 @@ public class GeminiService {
         return sendPrompt(prompt);
     }
 
-
-    /** 2) Önerileri TMDB’de bul → DB’ye ekle → en doğru içerikleri döndür */
+    // =====================================================
+    // 2️⃣ MOVIE MATCH
+    // =====================================================
     public List<Movie> smartMatch(List<String> geminiTitles) {
 
         List<Movie> results = new ArrayList<>();
@@ -46,30 +51,61 @@ public class GeminiService {
         for (String title : geminiTitles) {
 
             Map<String, Object> tmdbData = tmdbSearchService.searchOne(title);
-
             if (tmdbData == null) continue;
+
+            // ❗ Eğer TMDB sonucu dizi ise atla
+            if ("tv".equals(tmdbData.get("media_type"))) continue;
 
             Long tmdbId = Long.valueOf(tmdbData.get("id").toString());
 
-            // DB’de varsa direkt kullan
-            Optional<Movie> existing = recommendationRepository.findByTmdbId(tmdbId);
+            Optional<Object> existing = movieRepository.findByTmdbId(tmdbId);
             if (existing.isPresent()) {
-                results.add(existing.get());
+                results.add((Movie) existing.get());
                 continue;
             }
 
-            // Yoksa TMDB’den yeni movie oluştur
             Movie movie = tmdbSearchService.convertToMovie(tmdbData);
-            recommendationRepository.save(movie);
-
+            movieRepository.save(movie);
             results.add(movie);
         }
 
         return results;
     }
 
+    // =====================================================
+    // 3️⃣ SERIE MATCH ✅ (SORUNUN ÇÖZÜLDÜĞÜ YER)
+    // =====================================================
+    public List<Serie> smartMatchSeries(List<String> geminiTitles) {
 
-    /** 3) Gemini API */
+        List<Serie> results = new ArrayList<>();
+
+        for (String title : geminiTitles) {
+
+            Map<String, Object> tmdbData = tmdbSearchService.searchOne(title);
+            if (tmdbData == null) continue;
+
+            // ❗ Eğer TMDB sonucu film ise atla
+            if ("movie".equals(tmdbData.get("media_type"))) continue;
+
+            Long tmdbId = Long.valueOf(tmdbData.get("id").toString());
+
+            Optional<Serie> existing = serieRepository.findByTmdbId(tmdbId);
+            if (existing.isPresent()) {
+                results.add(existing.get());
+                continue;
+            }
+
+            Serie serie = tmdbSearchService.convertToSerie(tmdbData);
+            serieRepository.save(serie);
+            results.add(serie);
+        }
+
+        return results;
+    }
+
+    // =====================================================
+    // 4️⃣ Gemini API
+    // =====================================================
     public List<String> sendPrompt(String prompt) {
 
         try {

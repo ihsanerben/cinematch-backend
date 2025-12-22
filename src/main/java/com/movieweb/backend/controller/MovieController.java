@@ -3,6 +3,7 @@ package com.movieweb.backend.controller;
 import ch.qos.logback.classic.Logger;
 import com.movieweb.backend.model.Movie;
 import com.movieweb.backend.repository.MovieRepository;
+import com.movieweb.backend.security.JwtTokenProvider;
 import com.movieweb.backend.service.TmdbService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
+
+import com.movieweb.backend.model.OldMovieRecommendation;
+import com.movieweb.backend.model.User;
+import com.movieweb.backend.repository.OldMovieRecommendationRepository;
+import com.movieweb.backend.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+
 
 @Slf4j
 @RestController
@@ -19,6 +28,9 @@ public class MovieController {
 
     private final TmdbService tmdbService;
     private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
+    private final OldMovieRecommendationRepository oldMovieRecommendationRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/sync-all")
     public ResponseEntity<String> syncAllMovies() {
@@ -30,6 +42,7 @@ public class MovieController {
     public ResponseEntity<List<Movie>> getAllMovies() {
         return ResponseEntity.ok(tmdbService.getAllMovies());
     }
+
     @DeleteMapping("/erotic")
     public ResponseEntity<?> deleteEroticMovies() {
 
@@ -49,4 +62,24 @@ public class MovieController {
 
         return ResponseEntity.ok("Silinen erotik film sayısı: " + deletedCount);
     }
+
+    // ⭐ Kullanıcının geçmiş film önerileri
+    @GetMapping("/recommendations/history/movie")
+    public ResponseEntity<List<OldMovieRecommendation>> getOldMovieRecommendations(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+
+        String token = authHeader.substring(7);
+        String email = jwtTokenProvider.getEmailFromToken(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(
+                oldMovieRecommendationRepository
+                        .findByUserOrderByCreatedAtDesc(user)
+        );
+    }
+
+
 }
