@@ -36,7 +36,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // ⭐ CORS AYARI
+                // ⭐ CORS AYARI: bircok yerde vardi, onlari sildim sadece burasi var.
                 .cors(cors -> cors.configurationSource(request -> {
                     var config = new org.springframework.web.cors.CorsConfiguration();
                     config.addAllowedOrigin("http://localhost:3000");
