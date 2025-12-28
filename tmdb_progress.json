@@ -1,3 +1,6 @@
 {
-  "popular" : 38
+  "popular" : 500,
+  "top_rated" : 500,
+  "upcoming" : 39,
+  "trending" : 500
 }
