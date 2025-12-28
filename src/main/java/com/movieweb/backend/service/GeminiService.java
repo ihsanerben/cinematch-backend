@@ -36,7 +36,7 @@ public class GeminiService {
         String prompt =
                 "User likes these movies/series: " +
                         String.join(", ", titles) +
-                        ". Recommend 5 similar movies or series. Return only titles.";
+                        ". Recommend 5 well-known similar movies or series. Return only titles.";
 
         return sendPrompt(prompt);
     }

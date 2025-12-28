@@ -54,8 +54,12 @@ public class SecurityConfig {
                         // 🎬 PUBLIC: movies & series
                         .requestMatchers("/api/movies/**", "/api/series/**").permitAll()
 
+                        .requestMatchers("/api/tmdb/sync-all").permitAll()
+                        .requestMatchers("/api/series/sync").permitAll()
+
                         // ⭐ ⭐ BURADA EKLEDİK → OpenAI recommendation endpoint TOKEN İSTER
                         .requestMatchers("/api/recommendations/**").authenticated()
+
 
                         // ❤️ FAVOURITES DA TOKEN İSTER
                         .requestMatchers("/api/favorites/**").authenticated()
