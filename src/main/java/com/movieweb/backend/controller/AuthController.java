@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -22,10 +21,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         Map<String, Object> result = authService.register(user);
-        user.setCreatedAt(LocalDate.now());
-        if (result.containsKey("error")) {
-            return ResponseEntity.badRequest().body(result);
-        }
         return ResponseEntity.ok(result);
     }
 
