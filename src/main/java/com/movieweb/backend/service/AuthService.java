@@ -21,6 +21,31 @@ public class AuthService {
 
     // ✅ Register
     public Map<String, Object> register(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User payload is missing.");
+        }
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email cannot be empty.");
+        }
+
+        String normalizedEmail = user.getEmail().trim();
+        user.setEmail(normalizedEmail);
+
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new IllegalStateException("Email already in use.");
+        }
+
+        if (user.getPhoneNumber() != null) {
+            String normalizedPhone = user.getPhoneNumber().trim();
+            if (normalizedPhone.isBlank()) {
+                user.setPhoneNumber(null);
+            } else {
+                user.setPhoneNumber(normalizedPhone);
+                if (userRepository.existsByPhoneNumber(normalizedPhone)) {
+                    throw new IllegalStateException("Phone number already in use.");
+                }
+            }
+        }
 
         user.setCreatedAt(LocalDate.now()); // 🟩 createdAt burada set edilmeli!
 

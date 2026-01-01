@@ -98,16 +98,16 @@ public class UserService {
         if (password.length() < 6) {
             throw new IllegalArgumentException("Password must be at least 6 characters.");
         }
-        if (!password.matches(".*[A-Z].*")) {
+        if (!password.matches(".[A-Z].")) {
             throw new IllegalArgumentException("Password must contain at least one uppercase letter.");
         }
-        if (!password.matches(".*[a-z].*")) {
+        if (!password.matches(".[a-z].")) {
             throw new IllegalArgumentException("Password must contain at least one lowercase letter.");
         }
-        if (!password.matches(".*\\d.*")) {
+        if (!password.matches(".\\d.")) {
             throw new IllegalArgumentException("Password must contain at least one number.");
         }
-        if (!password.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+        if (!password.matches(".[!@#$%^&(),.?\":{}|<>].*")) {
             throw new IllegalArgumentException("Password must contain at least one special character.");
         }
     }
