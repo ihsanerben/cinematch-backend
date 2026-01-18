@@ -34,9 +34,16 @@ public class GeminiService {
     public List<String> getRecommendationsFromTitles(List<String> titles) {
 
         String prompt =
-                "User likes these movies/series: " +
+                "The user likes the following movies or TV series:\n" +
                         String.join(", ", titles) +
-                        ". Recommend 5 well-known similar movies or series. Return only titles.";
+                        "\n" +
+                        "Recommend exactly 2 similar movies or TV series.\n" +
+                        "\n" +
+                        "STRICT RULES:\n" +
+                        "- Only recommend well-known and globally popular titles.\n" +
+                        "- Titles must be in English.\n" +
+                        "- IMDb rating should generally be 7.5 or higher.\n" +
+                        "- Return ONLY the titles.\n";
 
         return sendPrompt(prompt);
     }

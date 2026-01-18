@@ -52,8 +52,6 @@
 
         <!-- Gemini  -->
 
-
-
         <!-- ✅ Spring Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

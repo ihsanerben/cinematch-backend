@@ -59,7 +59,6 @@ public class MovieController {
                 log.warn("⛔ Erotik film silindi → {}", m.getTitle());
             }
         }
-
         return ResponseEntity.ok("Silinen erotik film sayısı: " + deletedCount);
     }
 

@@ -15,20 +15,9 @@ import java.util.List;
     public class TmdbController {
         private final TmdbService tmdbService;
 
-        @PostMapping("/sync-all")
-        public ResponseEntity<String> syncAll() {
-            int total = tmdbService.syncAllMovies();
-            return ResponseEntity.ok("Synced movies: " + total);
-        }
-
         @GetMapping("/all")
         public ResponseEntity<List<Movie>> getAll() {
             return ResponseEntity.ok(tmdbService.getAllMovies());
         }
 
-        @PostMapping("/scan")
-        public ResponseEntity<?> scanMovies() {
-            int count = tmdbService.scanById();
-            return ResponseEntity.ok("Yeni eklenen film sayısı: " + count);
-        }
     }
