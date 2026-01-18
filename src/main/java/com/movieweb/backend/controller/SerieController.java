@@ -43,13 +43,6 @@ public class SerieController {
         return ResponseEntity.ok("Synced series: " + total);
     }
 
-    // Veritabanındaki tüm dizileri sil
-    @DeleteMapping("/clear")
-    public ResponseEntity<String> clearAllSeries() {
-        tmdbShowService.clearAllSeries();
-        return ResponseEntity.ok("All series deleted successfully.");
-    }
-
     @GetMapping("/recommendations/history/serie")
     public ResponseEntity<List<OldSerieRecommendation>> getOldSerieRecommendations(
             @RequestHeader("Authorization") String authHeader
